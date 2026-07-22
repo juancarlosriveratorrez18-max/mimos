@@ -33,15 +33,6 @@ export const obtenerPedidosPorUsuario = async (usuarioId) => {
     return { data, error };
 };
 
-export const obtenerPedidosPorUsuario = async (usuarioId) => {
-    const { data, error } = await supabase
-        .from('pedidos')
-        .select('*')
-        .eq('usuario_id', usuarioId)
-        .order('fecha_pedido', { ascending: false });
-    return { data, error };
-};
-
 export const actualizarEstadoPedido = async (id, estado) => {
     const { data, error } = await supabase
         .from('pedidos')

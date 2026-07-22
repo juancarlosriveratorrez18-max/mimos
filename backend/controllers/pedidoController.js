@@ -1,6 +1,6 @@
 import { crearPedido, obtenerPedidoConDetalles, obtenerPedidosPorUsuario, actualizarEstadoPedido, crearDetallePedido } from '../models/pedidoModel.js';
 import { enviarConfirmacionPedido } from '../utils/sendEmail.js';
-import { obtenerPorId as obtenerUsuario } from '../models/userModel.js';
+import { obtenerPorId as obtenerUsuario } from '../models/user.js';
 
 export const crearPedidoConDetalles = async (req, res) => {
     try {
