@@ -27,7 +27,7 @@ export const registro = async (req, res) => {
         const hashedPassword = await bcrypt.hash(password, 10);
 
         // rol por defecto
-        const rolPorDefecto = "usuarios";
+        const rolPorDefecto = "usuario";
 
         // guardar en la base de datos
         const { data: nuevoUsuario, error } = await crearUsuario(
@@ -36,10 +36,12 @@ export const registro = async (req, res) => {
             hashedPassword,
             rolPorDefecto
         );
-
+        
         if (error) {
+            console.error("Error de Supabase al crear usuario:", error);
+
             return res.status(500).json({
-                error: "Error al crear el usuario"
+                error: error.message
             });
         }
 
@@ -54,64 +56,68 @@ export const registro = async (req, res) => {
         });
 
     } catch (error) {
-        console.log("Error en el registro:", error); // ← console, no concole
+        console.log("Error en el registro:", error);
         return res.status(500).json({
             error: error.message
         });
     }
 };
 
-//crear login
-
-export const login = async (req,res) => {
+// crear login
+export const login = async (req, res) => {
     try {
-        const {email,password} = req.body;
-    // validamos que todos los campos esten llenos
-    if (!email || !password){
-        return res.status(400).json({
-     
-            error: "todos los campos son requeridos: email y password"
+        const { email, password } = req.body;
+
+        // validamos que todos los campos esten llenos
+        if (!email || !password) {
+            return res.status(400).json({
+                error: "todos los campos son requeridos: email y password"
+            });
+        }
+
+        // validamos si el correo existe
+        const { data: usuario } = await obtenerPorEmail(email);
+        if (!usuario) {
+            return res.status(400).json({
+                error: "El email no está registrado"
+            });
+        }
+
+        // validamos la contraseña
+        const passwordValida = await bcrypt.compare(password, usuario.password);
+        if (!passwordValida) {
+            return res.status(400).json({
+                error: "Contraseña incorrecta"
+            });
+        }
+
+        // generamos el token JWT
+        const token = jwt.sign(
+            {
+                id: usuario.id,
+                nombre: usuario.nombre,
+                email: usuario.email,
+                rol: usuario.rol
+            },
+            process.env.JWT_SECRET,
+            { expiresIn: '1h' }
+        );
+
+        return res.status(200).json({
+            message: 'Inicio de sesión exitoso',
+            token,
+            usuario: {
+                id: usuario.id,
+                nombre: usuario.nombre,
+                email: usuario.email,
+                rol: usuario.rol
+            }
         });
-    }
 
-// validamos si el correo existe
-const {data: usuario} = await obtenerPorEmail(email);
-if (!usuario){
-    return res.status(400).json({
-        error: "El email no está registrado"
-    });
-}
-
-// validamos la contraseña
-const passwordValida = await bcrypt.compare(password, usuario.password);
-if (!passwordValida){
-    return res.status(400).json({
-        error: "Contraseña incorrecta"
-    });
-}
-
-//generamos el token JWT
-    const token = jwt.sign(
-        {
-            id: usuario.id,
-            nombre: usuario.nombre,
-            email: usuario.email,
-            rol: usuario.rol
-        },
-        process.env.JWT_SECRET,
-        {expiresIn: '1h'}
-    );
-
-    return res.status(200).json({
-        message: "Login exitoso",
-        token
-    });
-
-} catch (error){
-    console.error("Error en el login:", error);
+    } catch (error) {
+        console.error("Error en el login:", error);
         return res.status(500).json({
             error: error.message
         });
-}
-
+    }
 };

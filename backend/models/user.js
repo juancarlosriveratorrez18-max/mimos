@@ -4,8 +4,18 @@ import { supabase } from "../config/supabase.js";
 export const crearUsuario = async (nombre, email, password, rol) => {
     const { data, error } = await supabase
         .from('usuarios')
-        .insert({ nombre, email, password, rol: rol || 'usuario' })
+        .insert({
+            nombre,
+            email,
+            password,
+            rol: rol || 'usuario'
+        })
         .select('id, nombre, email, rol, password');
+
+    if (error) {
+        console.error("Error en Supabase:", error);
+    }
+
     return { data, error };
 };
 
@@ -56,3 +66,4 @@ export const eliminarUsuario = async (id) => {
         .select('id, nombre, email, rol');
     return { data, error };
 };
+
